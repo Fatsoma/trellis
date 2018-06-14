@@ -2,6 +2,7 @@
 vendor/roles
 *.py[co]
 *.retry
+*.sql
 .trellis/*
 !.trellis/cli.yml
 trellis.cli.local.yml
