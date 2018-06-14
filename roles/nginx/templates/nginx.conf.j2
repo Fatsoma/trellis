@@ -133,6 +133,13 @@ http {
   tcp_nopush      on;
   {% endblock %}
 
+  {% block advanced_config -%}
+  # Advanced config
+  # As we have numerous server_names we need to increase the hash max size
+  # Ref: http://nginx.org/en/docs/http/server_names.html#optimization
+  server_names_hash_max_size 512;
+  {% endblock -%}
+
   {% block compression -%}
   # Compression
 
