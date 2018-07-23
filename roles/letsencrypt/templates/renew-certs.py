@@ -9,7 +9,7 @@ from subprocess import CalledProcessError, check_output, STDOUT
 failed = False
 letsencrypt_cert_ids = {{ letsencrypt_cert_ids }}
 
-for site in {{ sites_using_letsencrypt }}:
+for site in {{ site_hosts_using_letsencrypt }}:
     csr_path = os.path.join('{{ acme_tiny_data_directory }}', 'csrs', '{}-{}.csr'.format(site, letsencrypt_cert_ids[site]))
     bundled_cert_path = os.path.join('{{ letsencrypt_certs_dir }}', '{}-bundled.cert'.format(site))
     bundled_hashed_cert_path = os.path.join('{{ letsencrypt_certs_dir }}', '{}-{}-bundled.cert'.format(site, letsencrypt_cert_ids[site]))

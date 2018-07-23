@@ -1,5 +1,7 @@
 sites_using_letsencrypt: "{{ (wordpress_sites | select_sites('ssl.enabled', 'true') | select_sites('ssl.provider', 'eq', 'letsencrypt')).keys() | list }}"
+site_hosts_using_letsencrypt: "{{ (wordpress_sites | select_sites('ssl.enabled', 'true') | select_sites('ssl.provider', 'eq', 'letsencrypt')).values() | map(attribute='site_hosts', default=[]) | flatten | map(attribute='canonical') }}"
 site_uses_letsencrypt: "{{ (ssl_enabled and item.value.ssl.provider | default('manual') == 'letsencrypt') | bool }}"
+site_host_uses_letsencrypt: "{{ (host_ssl_enabled and item.0.ssl.provider | default('manual') == 'letsencrypt') | bool }}"
 missing_hosts: "{{ site_hosts | difference((current_hosts.results | selectattr('item.key', 'equalto', item.key) | selectattr('stdout_lines', 'defined') | sum(attribute='stdout_lines', start=[]) | map('trim') | list | join(' ')).split(' ')) }}"
 letsencrypt_cert_ids: >-
   {{ dict((generate_cert_ids | default({'results':[]})).results
