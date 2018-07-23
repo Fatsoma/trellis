@@ -2,6 +2,39 @@
 
 {% block server_before %}{% endblock %}
 
+{% macro https(host) -%}
+  {% if ssl_enabled -%}
+  # SSL configuration
+  include h5bp/directive-only/ssl.conf;
+
+  ssl_buffer_size 1400; # 1400 bytes to fit in one MTU
+
+  {% if item.value.ssl.provider | default('manual') != 'self-signed' -%}
+  add_header Strict-Transport-Security "max-age={{ [hsts_max_age, hsts_include_subdomains, hsts_preload] | reject('equalto', omit) | join('; ') | trim }}";
+  {% endif -%}
+
+  {% if 'client_cert_url' in item.value.ssl -%}
+  ssl_verify_client       on;
+  ssl_client_certificate  {{ nginx_ssl_path }}/client-{{ (item.value.ssl.client_cert_url | hash('md5'))[:7] }}.crt;
+  {% endif -%}
+
+  {% if item.value.ssl.provider | default('manual') == 'manual' and 'cert' in item.value.ssl and 'key' in item.value.ssl -%}
+  ssl_certificate         {{ nginx_path }}/ssl/{{ item.value.ssl.cert | basename }};
+  ssl_certificate_key     {{ nginx_path }}/ssl/{{ item.value.ssl.key | basename }};
+
+  {% elif item.value.ssl.provider | default('manual') == 'letsencrypt' -%}
+  ssl_certificate         {{ nginx_path }}/ssl/letsencrypt/{{ host.canonical }}-bundled.cert;
+  ssl_certificate_key     {{ nginx_path }}/ssl/letsencrypt/{{ host.canonical }}.key;
+
+  {% elif item.value.ssl.provider | default('manual') == 'self-signed' -%}
+  ssl_certificate         {{ nginx_path }}/ssl/{{ item.key }}.cert;
+  ssl_trusted_certificate {{ nginx_path }}/ssl/{{ item.key }}.cert;
+  ssl_certificate_key     {{ nginx_path }}/ssl/{{ item.key }}.key;
+
+  {% endif -%}
+  {% endif -%}
+{% endmacro -%}
+
 {% for host in item.value.site_hosts | default([]) %}
 server {
   {% block server_id -%}
@@ -10,9 +43,9 @@ server {
 
   {% if nginx_http3_enabled and ssl_enabled -%}
   # Listen on UDP for QUIC+HTTP/3
-  listen [::]:443 quic{% if is_first_site_use_ssl %} reuseport{% endif -%};
-  listen 443 quic{% if is_first_site_use_ssl %} reuseport{% endif -%};
-  {% if is_first_site_use_ssl -%}# there has to be one listen quic directive with `reuseport` for working QUIC responses in current nginx version, using the first site.
+  listen [::]:443 quic{% if is_first_site_use_ssl and loop.first %} reuseport{% endif -%};
+  listen 443 quic{% if is_first_site_use_ssl and loop.first %} reuseport{% endif -%};
+  {% if is_first_site_use_ssl end loop.first -%}# there has to be one listen quic directive with `reuseport` for working QUIC responses in current nginx version, using the first site.
   {% endif %}
   {% endif %}
 
@@ -93,38 +126,7 @@ server {
   {% endif -%}
   {% endblock -%}
 
-  {% block https -%}
-  {% if ssl_enabled -%}
-  # SSL configuration
-  include h5bp/directive-only/ssl.conf;
-
-  ssl_buffer_size 1400; # 1400 bytes to fit in one MTU
-
-  {% if item.value.ssl.provider | default('manual') != 'self-signed' -%}
-  add_header Strict-Transport-Security "max-age={{ [hsts_max_age, hsts_include_subdomains, hsts_preload] | reject('equalto', omit) | join('; ') | trim }}";
-  {% endif -%}
-
-  {% if 'client_cert_url' in item.value.ssl -%}
-  ssl_verify_client       on;
-  ssl_client_certificate  {{ nginx_ssl_path }}/client-{{ (item.value.ssl.client_cert_url | hash('md5'))[:7] }}.crt;
-  {% endif -%}
-
-  {% if item.value.ssl.provider | default('manual') == 'manual' and 'cert' in item.value.ssl and 'key' in item.value.ssl -%}
-  ssl_certificate         {{ nginx_path }}/ssl/{{ item.value.ssl.cert | basename }};
-  ssl_certificate_key     {{ nginx_path }}/ssl/{{ item.value.ssl.key | basename }};
-
-  {% elif item.value.ssl.provider | default('manual') == 'letsencrypt' -%}
-  ssl_certificate         {{ nginx_path }}/ssl/letsencrypt/{{ host.canonical }}-bundled.cert;
-  ssl_certificate_key     {{ nginx_path }}/ssl/letsencrypt/{{ host.canonical }}.key;
-
-  {% elif item.value.ssl.provider | default('manual') == 'self-signed' -%}
-  ssl_certificate         {{ nginx_path }}/ssl/{{ item.key }}.cert;
-  ssl_trusted_certificate {{ nginx_path }}/ssl/{{ item.key }}.cert;
-  ssl_certificate_key     {{ nginx_path }}/ssl/{{ item.key }}.key;
-
-  {% endif -%}
-  {% endif -%}
-  {% endblock -%}
+  {{ https(host) }}
 
   {% block acme_challenge -%}
   include acme-challenge-location.conf;
@@ -339,7 +341,7 @@ server {
   include includes/directive-only/quic-tune.conf;
   {% endif %}
 
-  {{ self.https() -}}
+  {{ https(host) -}}
 
   {{ self.acme_challenge() -}}
 
