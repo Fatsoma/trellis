@@ -2,6 +2,14 @@
 
 {% block server_before %}{% endblock %}
 
+{% macro server_id(host_canonical) -%}
+  listen {{ ssl_enabled | ternary('[::]:443 ssl', '[::]:80') }};
+  listen {{ ssl_enabled | ternary('443 ssl', '80') }};
+  http2 {{ nginx_http2_enabled | default(false) | ternary('on', 'off') }};
+  http3 {{ nginx_http3_enabled | default(false) | ternary('on', 'off') }};
+  server_name {{ [host_canonical] | union(multisite_subdomains_wildcards) | join(' ') }};
+{% endmacro %}
+
 {% macro https(host_canonical) -%}
   {% if ssl_enabled -%}
   # SSL configuration
@@ -40,13 +48,7 @@
 
 {% for host in item.value.site_hosts | default([]) %}
 server {
-  {% block server_id -%}
-  listen {{ ssl_enabled | ternary('[::]:443 ssl', '[::]:80') }};
-  listen {{ ssl_enabled | ternary('443 ssl', '80') }};
-  http2 {{ nginx_http2_enabled | default(false) | ternary('on', 'off') }};
-  http3 {{ nginx_http3_enabled | default(false) | ternary('on', 'off') }};
-  server_name {{ [host.canonical] | union(multisite_subdomains_wildcards) | join(' ') }};
-  {% endblock %}
+  {{ server_id(host.canonical) }}
 
   {% block logs -%}
   access_log   {{ www_root }}/{{ item.key }}/logs/access.log main;
