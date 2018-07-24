@@ -2,6 +2,23 @@
 
 {% block server_before %}{% endblock %}
 
+{% macro server_id(host, is_first_site_host_use_ssl=false) -%}
+  listen {{ ssl_enabled | ternary('[::]:443 ssl', '[::]:80') }};
+  listen {{ ssl_enabled | ternary('443 ssl', '80') }};
+
+  {% if nginx_http3_enabled and ssl_enabled -%}
+  # Listen on UDP for QUIC+HTTP/3
+  listen [::]:443 quic{% if is_first_site_host_use_ssl %} reuseport{% endif -%};
+  listen 443 quic{% if is_first_site_host_use_ssl %} reuseport{% endif -%};
+  {% if is_first_site_host_use_ssl -%}# there has to be one listen quic directive with `reuseport` for working QUIC responses in current nginx version, using the first site.
+  {% endif %}
+  {% endif %}
+
+  http2 {{ nginx_http2_enabled | default(false) | ternary('on', 'off') }};
+  http3 {{ nginx_http3_enabled | default(false) | ternary('on', 'off') }};
+  server_name {{ [host.canonical] | union(multisite_subdomains_wildcards) | join(' ') }};
+{% endmacro %}
+
 {% macro https(host) -%}
   {% if ssl_enabled -%}
   # SSL configuration
@@ -37,22 +54,7 @@
 
 {% for host in item.value.site_hosts | default([]) %}
 server {
-  {% block server_id -%}
-  listen {{ ssl_enabled | ternary('[::]:443 ssl', '[::]:80') }};
-  listen {{ ssl_enabled | ternary('443 ssl', '80') }};
-
-  {% if nginx_http3_enabled and ssl_enabled -%}
-  # Listen on UDP for QUIC+HTTP/3
-  listen [::]:443 quic{% if is_first_site_use_ssl and loop.first %} reuseport{% endif -%};
-  listen 443 quic{% if is_first_site_use_ssl and loop.first %} reuseport{% endif -%};
-  {% if is_first_site_use_ssl end loop.first -%}# there has to be one listen quic directive with `reuseport` for working QUIC responses in current nginx version, using the first site.
-  {% endif %}
-  {% endif %}
-
-  http2 {{ nginx_http2_enabled | default(false) | ternary('on', 'off') }};
-  http3 {{ nginx_http3_enabled | default(false) | ternary('on', 'off') }};
-  server_name {{ [host.canonical] | union(multisite_subdomains_wildcards) | join(' ') }};
-  {% endblock %}
+  {{ server_id(host, ssl_enabled and is_first_site_use_ssl and loop.first) }}
 
   {% block logs -%}
   access_log   {{ www_root }}/{{ item.key }}/logs/access.log main;
