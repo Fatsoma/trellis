@@ -6,7 +6,7 @@ missing_hosts: "{{ site_hosts | difference((current_hosts.results | selectattr('
 letsencrypt_cert_ids: >-
   {{ dict((generate_cert_ids | default({'results':[]})).results
      | selectattr('stdout', 'defined')
-     | map(attribute='item.key')
+     | map(attribute='item.1.canonical')
      | zip((generate_cert_ids | default({'results':[]})).results
            | selectattr('stdout', 'defined')
            | map(attribute='stdout'))) }}
