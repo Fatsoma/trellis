@@ -6,7 +6,7 @@ vagrant_box: 'bento/ubuntu-22.04'
 vagrant_box_version: '>= 0'
 vagrant_box_auto_arch: true
 vagrant_ansible_version: '2.10.7'
-vagrant_skip_galaxy: false
+vagrant_skip_galaxy: true
 vagrant_mount_type: 'nfs'
 vagrant_nfs_udp: false
 vagrant_require_version: '>= 2.1.0'
