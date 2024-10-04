@@ -5,7 +5,7 @@ vagrant_memory: 1024 # in MB
 vagrant_box: 'bento/ubuntu-20.04'
 vagrant_box_version: '>= 202012.23.0'
 vagrant_ansible_version: '2.10.7'
-vagrant_skip_galaxy: false
+vagrant_skip_galaxy: true
 vagrant_mount_type: 'nfs'
 
 vagrant_install_plugins: true
