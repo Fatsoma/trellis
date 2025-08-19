@@ -8,7 +8,7 @@
   server_name {{ [host_canonical] | union(multisite_subdomains_wildcards) | join(' ') }};
 {% endmacro %}
 
-{% macro https(host_canonical) -%}
+{% macro https(host) -%}
   {% if ssl_enabled -%}
   # SSL configuration
   include h5bp/directive-only/ssl.conf;
@@ -33,8 +33,8 @@
   ssl_certificate_key     {{ nginx_path }}/ssl/{{ item.value.ssl.key | basename }};
 
   {% elif item.value.ssl.provider | default('manual') == 'letsencrypt' -%}
-  ssl_certificate         {{ nginx_path }}/ssl/letsencrypt/{{ host_canonical }}-{{ letsencrypt_cert_ids[host_canonical] }}-bundled.cert;
-  ssl_certificate_key     {{ nginx_path }}/ssl/letsencrypt/{{ host_canonical }}.key;
+  ssl_certificate         {{ nginx_path }}/ssl/letsencrypt/{{ host.canonical }}-{{ letsencrypt_cert_ids[host.canonical] }}-bundled.cert;
+  ssl_certificate_key     {{ nginx_path }}/ssl/letsencrypt/{{ host.canonical }}.key;
 
   {% elif item.value.ssl.provider | default('manual') == 'self-signed' -%}
   ssl_certificate         {{ nginx_path }}/ssl/{{ item.key }}.cert;
@@ -107,7 +107,7 @@ server {
   {% endif -%}
   {% endblock -%}
 
-  {{ https(host.canonical) }}
+  {{ https(host) }}
 
   {% block acme_challenge -%}
   include acme-challenge-location.conf;
@@ -299,7 +299,7 @@ server {
   listen 80;
   server_name {{ host.redirects | join(' ') }};
 
-  {{ https(host.canonical) -}}
+  {{ https(host) -}}
 
   {{ self.acme_challenge() -}}
 
