@@ -10,3 +10,6 @@ memcached_packages_default:
 
 memcached_packages_custom: {}
 memcached_packages: "{{ memcached_packages_default | combine(php_memcached_packages, memcached_packages_custom) }}"
+
+memcached_service_enabled: yes
+memcached_service_state: started

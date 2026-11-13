@@ -18,5 +18,5 @@
 - name: Start the memcached service
   service:
     name: memcached
-    state: started
-    enabled: yes
+    state: "{{ memcached_service_state }}"
+    enabled: "{{ memcached_service_enabled }}"
