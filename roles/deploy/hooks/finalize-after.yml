@@ -26,7 +26,9 @@
     when: project.update_db_on_deploy | default(update_db_on_deploy) and project.multisite.enabled | default(false)
 
   - name: Update WP database
-    command: wp core update-db {{ project.multisite.enabled | default(false) | ternary('--network', '') }}
+    command: nice wp core update-db {{ project.multisite.enabled | default(false) | ternary('--network', '') }}
+    vars:
+      ansible_command_timeout: 1800
     args:
       chdir: "{{ deploy_helper.current_path }}"
     when: project.update_db_on_deploy | default(update_db_on_deploy)
