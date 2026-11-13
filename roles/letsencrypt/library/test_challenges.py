@@ -48,7 +48,7 @@ def get_status(host, path, file):
         })
         res = conn.getresponse()
     except (HTTPException, socket.timeout, socket.error):
-        return 0
+        raise
     else:
         return res.status
 
@@ -66,18 +66,25 @@ def main():
     file = module.params['file']
 
     failed_hosts = []
+    errors = []
 
     for host in hosts:
-        status = get_status(host, path, file)
-        if int(status) != 200:
-            failed_hosts.append(host)
+        try:
+            status = get_status(host, path, file)
+        except (HTTPException, socket.timeout, socket.error) as err:
+            failed_hosts.append("{0} (0)".format(host))
+            errors.append("Error for {0}: {1} ({2})".format(host, err, type(err)))
+        else:
+            if int(status) != 200:
+                failed_hosts.append("{0} ({1})".format(host, status))
 
     rc = int(len(failed_hosts) > 0)
 
     module.exit_json(
         changed=False,
         rc=rc,
-        failed_hosts=failed_hosts
+        failed_hosts=failed_hosts,
+        errors=errors
     )
 
 from ansible.module_utils.basic import *
