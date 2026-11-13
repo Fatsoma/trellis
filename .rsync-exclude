@@ -21,4 +21,3 @@
 # Manually check:
 /group_vars/all/main.yml
 /group_vars/all/users.yml
-/vagrant.default.yml

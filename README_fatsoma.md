@@ -26,5 +26,4 @@ Manually check for differences in:
 ```
 group_vars/all/main.yml
 group_vars/all/users.yml
-vagrant.default.yml
 ```
