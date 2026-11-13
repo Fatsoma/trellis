@@ -38,6 +38,7 @@ DEFAULTS_FILES = (
     REPO_ROOT / "roles/nginx/defaults/main.yml",
     REPO_ROOT / "roles/php/defaults/main.yml",
     REPO_ROOT / "roles/wordpress-setup/defaults/main.yml",
+    REPO_ROOT / "roles/letsencrypt/defaults/main.yml",
 )
 
 

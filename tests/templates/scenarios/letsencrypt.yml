@@ -1,0 +1,35 @@
+wordpress_sites:
+  example.com:
+    site_hosts:
+      - canonical: example.test
+        redirects:
+          - www.example.test
+      - canonical: example.org
+        redirects:
+          - www.example.org
+    multisite:
+      enabled: true
+      subdomains: false
+    ssl:
+      enabled: true
+      provider: letsencrypt
+
+  second.example.net:
+    site_hosts:
+      - canonical: second.example.com
+        redirects:
+          - www.second.example.com
+      - canonical: second.example.test
+    ssl:
+      enabled: true
+      provider: letsencrypt
+
+  self.example.net:
+    site_hosts:
+      - canonical: self.example.org
+        redirects:
+          - www.self.example.org
+      - canonical: self.example.test
+    ssl:
+      enabled: true
+      provider: self-signed
